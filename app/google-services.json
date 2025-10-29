@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "314274041037",
+    "project_id": "proyectogestionturnos",
+    "storage_bucket": "proyectogestionturnos.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:314274041037:android:973275cd7ae148cc9c2d84",
+        "android_client_info": {
+          "package_name": "com.aplimoviles.proyectoapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAEXWknKLx7c00YW7hCEPnsIdg0IUaGN0s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
