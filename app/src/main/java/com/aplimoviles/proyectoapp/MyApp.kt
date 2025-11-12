@@ -8,12 +8,10 @@ import com.google.firebase.firestore.firestore
 
 class MyApp: Application() {
     val db = Firebase.firestore
-    // You can also define your Realtime Database instance here if needed
-    val database = Firebase.database // Get instance via Firebase object
+    val database = Firebase.database
 
     override fun onCreate() {
         super.onCreate()
-        // The recommended way to enable persistence for Realtime Database
         database.setPersistenceEnabled(true)
     }
 }
