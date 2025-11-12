@@ -1,6 +1,10 @@
 package com.aplimoviles.proyectoapp.navigation
 
+import androidx.compose.runtime.Composable
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.aplimoviles.proyectoapp.auth.LoginScreen
 import com.google.firebase.auth.FirebaseAuth
 
 // Define las rutas de navegación
@@ -10,6 +14,7 @@ object Destinations {
     const val HOME_ROUTE = "home"
 }
 
+@Composable
 fun AppNavigation(auth: FirebaseAuth) {
     val navController = rememberNavController()
 
@@ -22,7 +27,6 @@ fun AppNavigation(auth: FirebaseAuth) {
 
     NavHost(navController = navController, startDestination = startDestination) {
         composable(Destinations.LOGIN_ROUTE) {
-            // Se asume que LoginScreen ahora está en el paquete 'screens'
             LoginScreen(navController = navController)
         }
         composable(Destinations.REGISTER_ROUTE) {
