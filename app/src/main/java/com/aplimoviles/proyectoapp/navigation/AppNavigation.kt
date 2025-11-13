@@ -4,7 +4,9 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.aplimoviles.proyectoapp.auth.HomeScreen
 import com.aplimoviles.proyectoapp.auth.LoginScreen
+import com.aplimoviles.proyectoapp.auth.RegisterScreen
 import com.google.firebase.auth.FirebaseAuth
 
 // Define las rutas de navegación
