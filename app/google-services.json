@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "314274041037",
+    "firebase_url": "https://proyectogestionturnos-default-rtdb.europe-west1.firebasedatabase.app",
     "project_id": "proyectogestionturnos",
     "storage_bucket": "proyectogestionturnos.firebasestorage.app"
   },

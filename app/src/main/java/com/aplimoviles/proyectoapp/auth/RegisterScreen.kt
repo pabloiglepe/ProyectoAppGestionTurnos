@@ -36,6 +36,7 @@ fun RegisterScreen(
 
     val scope = rememberCoroutineScope()
     val auth = Firebase.auth
+
     // Obtenemos la instancia de Realtime Database (inicializada en MyApp)
     val database = Firebase.database
 
