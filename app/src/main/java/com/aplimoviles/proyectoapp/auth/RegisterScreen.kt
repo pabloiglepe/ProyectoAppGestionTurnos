@@ -19,6 +19,21 @@ import com.google.firebase.database.database
 import kotlinx.coroutines.launch
 import java.util.*
 import android.util.Patterns // Necesario para la validación de formato de email
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.ui.text.input.KeyboardType
+import java.text.SimpleDateFormat
+
+fun parseDateOfBirth(dateString: String): Date? {
+    val format = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+    format.isLenient = false // Evitar fechas inválidas
+    return try {
+        format.parse(dateString)
+    } catch (e: Exception) {
+        null
+    }
+}
 
 @Composable
 fun RegisterScreen(
@@ -29,6 +44,7 @@ fun RegisterScreen(
     var password by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
+    var dateOfBirth by remember { mutableStateOf("") }
 
     // Estados de la UI
     var errorMessage by remember { mutableStateOf("") }
@@ -59,7 +75,11 @@ fun RegisterScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
-                Text("Crear Cuenta", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
+                Text(
+                    "Crear Cuenta",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
                 Spacer(modifier = Modifier.height(32.dp))
 
                 // Campo Nombre
@@ -75,6 +95,7 @@ fun RegisterScreen(
                 OutlinedTextField(
                     value = phone,
                     onValueChange = { phone = it },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                     label = { Text("Teléfono") },
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -85,6 +106,30 @@ fun RegisterScreen(
                     value = email,
                     onValueChange = { email = it },
                     label = { Text("Email") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                // Campo Fecha Nacimiento
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = dateOfBirth,
+                    onValueChange = {
+                        if (it.length <= 10) {
+                            dateOfBirth = it
+                        }
+                    },
+                    label = { Text("Fecha de Nacimiento (DD/MM/AAAA)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.DateRange,
+                            contentDescription = "Seleccionar Fecha",
+                        )
+                    },
+                    maxLines = 1,
+                    singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(16.dp))
@@ -111,6 +156,7 @@ fun RegisterScreen(
                             val trimmedPassword = password.trim()
                             val trimmedName = name.trim()
                             val trimmedPhone = phone.trim()
+                            val trimmedDateOfBirth = dateOfBirth.trim()
 
                             // --- VALIDACIÓN BÁSICA ---
                             if (trimmedEmail.isBlank() || trimmedPassword.length < 6 || trimmedName.isBlank() || trimmedPhone.isBlank()) {
@@ -126,6 +172,14 @@ fun RegisterScreen(
                                 return@launch
                             }
 
+                            // Parseo de fecha
+                            val parsedDate = parseDateOfBirth(trimmedDateOfBirth)
+                            if (parsedDate == null) { // <--- El error salta aquí
+                                errorMessage = "El formato de la fecha debe ser DD/MM/AAAA válido." // Pero tu error es este
+                                isLoading = false
+                                return@launch
+                            }
+
                             // 1. REGISTRO en AUTH (usando los valores trimmed)
                             auth.createUserWithEmailAndPassword(trimmedEmail, trimmedPassword)
                                 .addOnCompleteListener { task ->
@@ -137,7 +191,7 @@ fun RegisterScreen(
                                                 nombre = trimmedName,
                                                 email = trimmedEmail,
                                                 telefono = trimmedPhone,
-                                                fechaNacimiento = Date()
+                                                fechaNacimiento = parsedDate
                                             )
 
                                             // 3. GUARDAR en Realtime Database
@@ -149,18 +203,22 @@ fun RegisterScreen(
                                                     if (dbTask.isSuccessful) {
                                                         // Éxito: Navegar a Home
                                                         navController.navigate(Destinations.HOME_ROUTE) {
-                                                            popUpTo(Destinations.REGISTER_ROUTE) { inclusive = true }
+                                                            popUpTo(Destinations.REGISTER_ROUTE) {
+                                                                inclusive = true
+                                                            }
                                                         }
                                                     } else {
                                                         // Fallo en BD: Muestra el error de la tarea de BD
-                                                        errorMessage = "Registro Auth OK, pero BD falló: ${dbTask.exception?.localizedMessage ?: "Error desconocido en BD."}"
+                                                        errorMessage =
+                                                            "Registro Auth OK, pero BD falló: ${dbTask.exception?.localizedMessage ?: "Error desconocido en BD."}"
                                                     }
                                                 }
                                         }
                                     } else {
                                         // Fallo en AUTH
                                         isLoading = false
-                                        errorMessage = "Fallo: ${task.exception?.localizedMessage ?: "Error de registro."}"
+                                        errorMessage =
+                                            "Fallo: ${task.exception?.localizedMessage ?: "Error de registro."}"
                                     }
                                 }
                         }
@@ -171,7 +229,10 @@ fun RegisterScreen(
                         .height(50.dp)
                 ) {
                     if (isLoading) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary)
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
                     } else {
                         Text("Registrarse")
                     }
@@ -199,4 +260,6 @@ fun RegisterScreen(
         }
     }
 }
+
+
 
