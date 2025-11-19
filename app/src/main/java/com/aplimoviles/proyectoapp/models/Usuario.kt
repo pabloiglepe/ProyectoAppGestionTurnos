@@ -7,5 +7,6 @@ data class Usuario(
     val email: String = "",
     val telefono: String = "",
     val fechaNacimiento: Date = Date(),
+    var rol: String = "usuario"
 )
 

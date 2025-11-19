@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.aplimoviles.proyectoapp.auth.ElementForm
 import com.aplimoviles.proyectoapp.auth.HomeScreen
 import com.aplimoviles.proyectoapp.auth.LoginScreen
 import com.aplimoviles.proyectoapp.auth.RegisterScreen
@@ -14,6 +15,7 @@ object Destinations {
     const val LOGIN_ROUTE = "login"
     const val REGISTER_ROUTE = "register"
     const val HOME_ROUTE = "home"
+    const val ELEMENT_FORM = "element_form"
 }
 
 @Composable
@@ -36,6 +38,9 @@ fun AppNavigation(auth: FirebaseAuth) {
         }
         composable(Destinations.HOME_ROUTE) {
             HomeScreen(navController = navController)
+        }
+        composable(Destinations.ELEMENT_FORM) {
+            ElementForm(navController = navController)
         }
     }
 }
