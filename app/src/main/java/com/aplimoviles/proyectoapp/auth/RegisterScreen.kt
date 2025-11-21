@@ -191,7 +191,8 @@ fun RegisterScreen(
                                                 nombre = trimmedName,
                                                 email = trimmedEmail,
                                                 telefono = trimmedPhone,
-                                                fechaNacimiento = parsedDate
+                                                fechaNacimiento = parsedDate,
+                                                rol = "usuario"
                                             )
 
                                             // 3. GUARDAR en Realtime Database
@@ -202,7 +203,7 @@ fun RegisterScreen(
                                                     isLoading = false
                                                     if (dbTask.isSuccessful) {
                                                         // Éxito: Navegar a Home
-                                                        navController.navigate(Destinations.HOME_ROUTE) {
+                                                        navController.navigate(Destinations.ELEMENT_LIST) {
                                                             popUpTo(Destinations.REGISTER_ROUTE) {
                                                                 inclusive = true
                                                             }

@@ -66,7 +66,7 @@ fun HomeScreen(navController: NavHostController) {
                     Firebase.auth.signOut() // Cerrar sesión
                     // Navegar a Login y limpiar la pila de navegación
                     navController.navigate(Destinations.LOGIN_ROUTE) {
-                        popUpTo(Destinations.HOME_ROUTE) { inclusive = true }
+                        popUpTo(Destinations.ELEMENT_LIST) { inclusive = true }
                     }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),

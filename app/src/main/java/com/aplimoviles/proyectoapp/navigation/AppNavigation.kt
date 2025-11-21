@@ -14,8 +14,8 @@ import com.google.firebase.auth.FirebaseAuth
 object Destinations {
     const val LOGIN_ROUTE = "login"
     const val REGISTER_ROUTE = "register"
-    const val HOME_ROUTE = "home"
-    const val ELEMENT_FORM = "element_form"
+    const val ELEMENT_LIST = "elementList"
+    const val ELEMENT_FORM = "elementForm"
 }
 
 @Composable
@@ -24,7 +24,7 @@ fun AppNavigation(auth: FirebaseAuth) {
 
     // Decide el destino inicial basado en el estado de autenticación
     val startDestination = if (auth.currentUser != null) {
-        Destinations.HOME_ROUTE
+        Destinations.ELEMENT_LIST
     } else {
         Destinations.LOGIN_ROUTE
     }
@@ -36,7 +36,7 @@ fun AppNavigation(auth: FirebaseAuth) {
         composable(Destinations.REGISTER_ROUTE) {
             RegisterScreen(navController = navController)
         }
-        composable(Destinations.HOME_ROUTE) {
+        composable(Destinations.ELEMENT_LIST) {
             HomeScreen(navController = navController)
         }
         composable(Destinations.ELEMENT_FORM) {

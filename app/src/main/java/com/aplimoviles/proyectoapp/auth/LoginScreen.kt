@@ -114,7 +114,7 @@ fun LoginScreen(
                                                     duration = SnackbarDuration.Short
                                                 )
                                                 // Navegar a Home
-                                                navController.navigate(Destinations.HOME_ROUTE) {
+                                                navController.navigate(Destinations.ELEMENT_LIST) {
                                                     popUpTo(Destinations.LOGIN_ROUTE) {
                                                         inclusive = true
                                                     }

@@ -24,7 +24,6 @@ private lateinit var auth: FirebaseAuth
 
 class MainActivity : ComponentActivity() {
 
-    // Declara la instancia de FirebaseAuth
     private lateinit var auth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,7 +37,6 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    // Llama al Composable de navegación centralizado.
                     AppNavigation(auth = auth)
                 }
             }
