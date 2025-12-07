@@ -3,7 +3,10 @@ package com.aplimoviles.proyectoapp.models
 import java.util.Date
 
 data class Elementos (
-    var nombre: String = "",
-    var descripcion: String = "",
-    var fechCreacion: Date = Date()
-)
+    val nombre: String = "",
+    val descripcion: String = "",
+    val fechaCreacion: Date = Date(),
+    var id: String? = null
+) {
+     constructor() : this("", "", Date(), null)
+ }

@@ -11,21 +11,29 @@ import androidx.navigation.NavHostController
 import com.aplimoviles.proyectoapp.navigation.Destinations
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
+// --- NUEVAS IMPORTACIONES PARA DATABASE ---
+import com.google.firebase.database.database
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.ValueEventListener
 import kotlinx.coroutines.launch
+
+// ------------------------------------------
 
 @Composable
 fun LoginScreen(
     navController: NavHostController,
 ) {
-    // 1. Estados locales para Email y Contraseña
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
     val auth = Firebase.auth
+    // --- INSTANCIA DE DATABASE ---
+    val database = Firebase.database
+    // ----------------------------
 
-    // 2. Estado del Snackbar para mostrar mensajes
     val snackbarHostState = remember { SnackbarHostState() }
 
     Scaffold(
@@ -82,7 +90,7 @@ fun LoginScreen(
                         onClick = {
                             scope.launch {
 
-                                // A. VALIDACIÓN: Campos no vacíos
+                                // A. VALIDACIÓN: Campos no vacíos y Contraseña mínima
                                 if (email.isBlank() || password.isBlank()) {
                                     snackbarHostState.showSnackbar(
                                         message = "El email y la contraseña no pueden estar vacíos.",
@@ -90,8 +98,6 @@ fun LoginScreen(
                                     )
                                     return@launch
                                 }
-
-                                // B. VALIDACIÓN: Contraseña mínima
                                 if (password.length < 6) {
                                     snackbarHostState.showSnackbar(
                                         message = "La contraseña debe tener al menos 6 caracteres.",
@@ -100,28 +106,53 @@ fun LoginScreen(
                                     return@launch
                                 }
 
-                                // 3. Lógica de Firebase (solo se ejecuta si las validaciones pasan)
                                 isLoading = true
+
                                 auth.signInWithEmailAndPassword(email, password)
-                                    .addOnCompleteListener { task ->
-                                        isLoading = false
-                                        scope.launch {
-                                            if (task.isSuccessful) {
-                                                // C. Resultado Exitoso
-                                                snackbarHostState.showSnackbar(
-                                                    message = "Inicio de sesión exitoso. ¡Bienvenido!",
-                                                    withDismissAction = false,
-                                                    duration = SnackbarDuration.Short
-                                                )
-                                                // Navegar a Home
-                                                navController.navigate(Destinations.ELEMENT_LIST) {
-                                                    popUpTo(Destinations.LOGIN_ROUTE) {
-                                                        inclusive = true
-                                                    }
-                                                }
-                                            } else {
-                                                // C. Resultado Fallido
-                                                val errorMsg = task.exception?.localizedMessage
+                                    .addOnCompleteListener { authTask ->
+                                        if (authTask.isSuccessful) {
+                                            val userUid = auth.currentUser?.uid
+
+                                            if (userUid != null) {
+                                                database.getReference("users").child(userUid)
+                                                    .child("rol")
+                                                    .addListenerForSingleValueEvent(object :
+                                                        ValueEventListener {
+                                                        override fun onDataChange(snapshot: DataSnapshot) {
+                                                            isLoading = false
+                                                            val rol = snapshot.getValue(String::class.java) ?: "usuario"
+
+                                                            scope.launch {
+                                                                snackbarHostState.showSnackbar(
+                                                                    message = "Inicio de sesión exitoso. Rol: $rol",
+                                                                    withDismissAction = false,
+                                                                    duration = SnackbarDuration.Short
+                                                                )
+                                                            }
+
+                                                            navController.navigate(Destinations.ELEMENT_LIST) {
+                                                                popUpTo(Destinations.LOGIN_ROUTE) {
+                                                                    inclusive = true
+                                                                }
+                                                            }
+                                                        }
+
+                                                        override fun onCancelled(error: DatabaseError) {
+                                                            isLoading = false
+                                                            scope.launch {
+                                                                snackbarHostState.showSnackbar(
+                                                                    message = "Fallo al obtener datos del usuario. ${error.message}",
+                                                                    withDismissAction = true
+                                                                )
+                                                            }
+                                                            auth.signOut()
+                                                        }
+                                                    })
+                                            }
+                                        } else {
+                                            isLoading = false
+                                            scope.launch {
+                                                val errorMsg = authTask.exception?.localizedMessage
                                                     ?: "Error de autenticación desconocido."
                                                 snackbarHostState.showSnackbar(
                                                     message = "Error: ${errorMsg}",
@@ -147,11 +178,10 @@ fun LoginScreen(
                         }
                     }
                 }
-            } // Fin de Card
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Enlace para ir a la pantalla de Registro
             TextButton(onClick = {
                 navController.navigate(Destinations.REGISTER_ROUTE)
             }) {

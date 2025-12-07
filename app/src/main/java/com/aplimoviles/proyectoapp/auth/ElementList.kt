@@ -1,84 +1,175 @@
 package com.aplimoviles.proyectoapp.auth
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import com.aplimoviles.proyectoapp.models.Elementos
+import com.aplimoviles.proyectoapp.models.ElementListViewModel
 import com.aplimoviles.proyectoapp.navigation.Destinations
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 
+import java.text.SimpleDateFormat
+import java.util.Locale
+
+private val DATE_FORMAT = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavHostController) {
-    // Obtenemos el usuario actual de Firebase Auth
-    val currentUser = Firebase.auth.currentUser
+fun ElementList(
+    navController: NavController,
+    viewModel: ElementListViewModel = viewModel()
+) {
+    val elementos by viewModel.elementos.collectAsState()
+    val userRole by viewModel.userRole.collectAsState()
+    val showDeleteDialog by viewModel.showDeleteDialog.collectAsState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
+    val isAdmin = (userRole == 1) // Lógica de rol: 1 es Admin
+    val auth = Firebase.auth
+    val isLoggedIn = auth.currentUser != null
 
-        Text("Página Principal", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
-        Spacer(modifier = Modifier.height(32.dp))
-
-        if (currentUser != null) {
-
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth(0.9f)
-                    .padding(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .padding(24.dp)
-                        .fillMaxWidth(),
-                    horizontalAlignment = Alignment.Start
+    Scaffold(
+        topBar = { TopAppBar(title = { Text("Listado de Elementos") }) },
+        floatingActionButton = {
+            if (isAdmin) {
+                FloatingActionButton(
+                    onClick = {
+                        navController.navigate(Destinations.elementFormRoute())
+                    }
                 ) {
-                    Text("¡Bienvenido!", style = MaterialTheme.typography.titleLarge)
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Icon(Icons.Default.Add, contentDescription = "Añadir Elemento")
+                }
+            }
+        }
+    ) { padding ->
 
-                    HorizontalDivider(Modifier, DividerDefaults.Thickness, DividerDefaults.color)
-                    Spacer(modifier = Modifier.height(16.dp))
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize(),
+            horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
+        ) {
 
-                    Text("Email:", style = MaterialTheme.typography.labelMedium)
-                    Text(currentUser.email ?: "N/A", style = MaterialTheme.typography.bodyLarge)
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Text("UID:", style = MaterialTheme.typography.labelMedium)
-                    Text(currentUser.uid, style = MaterialTheme.typography.bodySmall)
+            if (elementos.isEmpty()) {
+                Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                    Text("No hay elementos registrados.", style = MaterialTheme.typography.titleMedium)
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f), // Esto permite que el LazyColumn ocupe el espacio restante
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(elementos, key = { it.id ?: it.nombre }) { elemento ->
+                        // Aseguramos que el ID no sea nulo para las operaciones de eliminación/edición
+                        elemento.id?.let { elementId ->
+                            ElementListItem(
+                                elemento = elemento,
+                                elementId = elementId,
+                                isAdmin = isAdmin,
+                                navController = navController,
+                                onDeleteClick = viewModel::startDelete
+                            )
+                        }
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(48.dp))
+            // --- BOTÓN DE DESLOGEO AÑADIDO ABAJO ---
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // Botón para cerrar sesión
-            Button(
-                onClick = {
-                    Firebase.auth.signOut() // Cerrar sesión
-                    // Navegar a Login y limpiar la pila de navegación
-                    navController.navigate(Destinations.LOGIN_ROUTE) {
-                        popUpTo(Destinations.ELEMENT_LIST) { inclusive = true }
-                    }
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                modifier = Modifier
-                    .fillMaxWidth(0.6f)
-                    .height(50.dp)
-            ) {
-                Text("Cerrar Sesión")
+            if (isLoggedIn) {
+                Button(
+                    onClick = {
+                        // 1. Cerrar sesión en Firebase
+                        auth.signOut()
+
+                        // 2. Navegar a Login y limpiar la pila de navegación
+                        navController.navigate(Destinations.LOGIN_ROUTE) {
+                            popUpTo(Destinations.ELEMENT_LIST) { inclusive = true }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                    modifier = Modifier
+                        .fillMaxWidth(0.6f)
+                        .height(50.dp)
+                ) {
+                    Text("Cerrar Sesión")
+                }
+            } else {
+                // Mensaje si el usuario no está logueado (solo se vería si falla la navegación)
+                Text("Error: Sesión no encontrada.", color = MaterialTheme.colorScheme.error)
             }
-        } else {
-            // Mensaje si el usuario no está logueado (solo se vería si falla la navegación)
-            Text("Error: Sesión no encontrada.", color = MaterialTheme.colorScheme.error)
+
+            Spacer(modifier = Modifier.height(16.dp))
+            // --- FIN BOTÓN DE DESLOGEO ---
+        }
+
+        if (showDeleteDialog) {
+            AlertDialog(
+                onDismissRequest = viewModel::dismissDeleteDialog,
+                title = { Text("Confirmación de Eliminación") },
+                text = { Text("¿Estás seguro de que deseas eliminar este elemento?") },
+                confirmButton = { TextButton(onClick = viewModel::confirmDelete) { Text("Sí") } },
+                dismissButton = { TextButton(onClick = viewModel::dismissDeleteDialog) { Text("No") } }
+            )
+        }
+
+
+    }
+}
+
+// Composable separado para cada elemento de la lista
+@Composable
+fun ElementListItem(
+    elemento: Elementos,
+    elementId: String,
+    isAdmin: Boolean,
+    navController: NavController,
+    onDeleteClick: (String) -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+
+
+            .clickable(enabled = isAdmin) {
+                navController.navigate(Destinations.elementFormRoute(elementId))
+            },
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text("Nombre: ${elemento.nombre}", style = MaterialTheme.typography.titleMedium)
+            Text("Descripción: ${elemento.descripcion}")
+            Text("Creación: ${DATE_FORMAT.format(elemento.fechaCreacion)}")
+
+            if (isAdmin) {
+                Spacer(Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // Botón Editar
+                    TextButton(onClick = {
+                        navController.navigate(Destinations.elementFormRoute(elementId))
+                    }) { Text("Editar") }
+
+                    // Botón Eliminar
+                    TextButton(onClick = {
+                        onDeleteClick(elementId) // Llama al VM para iniciar el diálogo y eliminación
+                    }) { Text("Eliminar", color = MaterialTheme.colorScheme.error) }
+                }
+            }
         }
     }
 }

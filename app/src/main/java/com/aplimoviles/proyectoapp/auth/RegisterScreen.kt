@@ -27,7 +27,7 @@ import java.text.SimpleDateFormat
 
 fun parseDateOfBirth(dateString: String): Date? {
     val format = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-    format.isLenient = false // Evitar fechas inválidas
+    format.isLenient = false
     return try {
         format.parse(dateString)
     } catch (e: Exception) {
